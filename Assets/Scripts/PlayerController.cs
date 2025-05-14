@@ -124,13 +124,14 @@ public class PlayerController : MonoBehaviour
 
         if (active)
         {
+            // Forzar posición Z del player a -11 (manteniendo X e Y actuales)
+            Vector3 pos = rb.position;
+            pos.z = -11f;
+            rb.position = pos;
             // Congelar rotación en Z
             rb.constraints |= RigidbodyConstraints.FreezeRotationZ;
 
-            // Forzar posición Z del player a -11 (manteniendo X e Y actuales)
-            Vector3 pos = transform.position;
-            pos.z = -11f;
-            transform.position = pos;
+           
         }
         else
         {
