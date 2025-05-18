@@ -8,7 +8,7 @@ public class CameraSwitcher : MonoBehaviour
     public GameObject player;
 
     private int currentCamIndex = 0;
-    private int cameraCount = 3;
+    private int cameraCount = 2;
 
     private PlayerController playerController;
 
@@ -39,10 +39,6 @@ public class CameraSwitcher : MonoBehaviour
 
         Debug.Log("Cambiando a cámara: " + index);
 
-        // Avisamos al Player si está en modo especial (índice 2)
-        if (playerController != null)
-        {
-            playerController.SetSpecialCameraMode(index == 2);
-        }
+       
     }
 }

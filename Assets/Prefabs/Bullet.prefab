@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6773787920222969629}
   - component: {fileID: 6872579830186956428}
   - component: {fileID: 4087834355132303245}
+  - component: {fileID: 3967089832458042360}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Bullet
@@ -109,7 +110,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 2, y: 2.5, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &6773787920222969629
 Rigidbody:
@@ -226,3 +227,17 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!114 &3967089832458042360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2512457537653874765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e1c5b8f5708aea429220b06bc5b0489, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 1
+  lifetime: 5
