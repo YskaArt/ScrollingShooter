@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - PowerUpHeal
   - PowerUpShot
+  - Boss
   layers:
   - Default
   - TransparentFX

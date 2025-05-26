@@ -8,12 +8,14 @@ public abstract class EnemyBase : MonoBehaviour
     public float moveSpeed = 5f;
     public int maxHealth = 3;
     public VisualEffect explosionEffectPrefab;
-
+    public int Points;
     protected int currentHealth;
     protected Rigidbody rb;
 
     [Header("Drops")]
     public List<DropItem> dropTable;
+    public AudioClip deathSound;        
+    protected AudioSource audioSource;
 
 
     [System.Serializable]
@@ -26,6 +28,7 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
         rb = GetComponent<Rigidbody>();
         currentHealth = maxHealth;
     }
@@ -46,16 +49,21 @@ public abstract class EnemyBase : MonoBehaviour
         }
     }
 
-    protected virtual void Die()
+    public void Die()
     {
-        TryDropItem();
+        GameObject soundObject = new GameObject("DeathSound");
+        AudioSource tempAudio = soundObject.AddComponent<AudioSource>();
+        tempAudio.clip = deathSound;
+        tempAudio.Play();
+        Destroy(soundObject, deathSound.length);
 
         if (explosionEffectPrefab != null)
-        {
+        { 
             VisualEffect vfx = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
             Destroy(vfx.gameObject, 3f);
         }
-
+        UIManager.Instance.AddScore(Points);
+        TryDropItem();
         Destroy(gameObject);
     }
 
@@ -74,7 +82,7 @@ public abstract class EnemyBase : MonoBehaviour
                 }
 
                 // Se destruye si el player no lo toma
-                Destroy(spawnedItem, 10f);
+                Destroy(spawnedItem, 30f);
 
                 break; // Solo un drop permitido
             }

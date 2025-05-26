@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.VFX;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -28,6 +29,13 @@ public class PlayerController : MonoBehaviour
     [Header("Salud")]
     public int maxHealth = 5;
     private int currentHealth;
+    public int CurrentHealth => currentHealth;
+
+    public int totalLives = 3;         
+    public Transform respawnPoint;      
+    public VisualEffect explosionVFX;     
+
+    private bool isDead = false;
 
     private Vector2 moveInput;
     private Rigidbody rb;
@@ -37,8 +45,11 @@ public class PlayerController : MonoBehaviour
     private bool isShooting;
     private float fireTimer;
 
+    public AudioClip deathSound;        
+    private AudioSource audioSource;
     private void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
         rb = GetComponent<Rigidbody>();
         currentHealth = maxHealth;
     }
@@ -144,6 +155,9 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        PlayerHealthUI.Instance.UpdateHealthBar((float)currentHealth / maxHealth);
         if (currentHealth <= 0)
         {
             Die();
@@ -163,8 +177,49 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("El jugador ha muerto.");
-        // Aquí puedes pausar el juego o mostrar el Game Over
+        if (isDead) return;
+        isDead = true;
+        GameObject soundObject = new GameObject("DeathSound");
+        AudioSource tempAudio = soundObject.AddComponent<AudioSource>();
+        tempAudio.clip = deathSound;
+        tempAudio.Play();
+        Destroy(soundObject, deathSound.length);
+        gameObject.SetActive(false);
+
+
+        if (explosionVFX != null)
+        {
+            
+            VisualEffect vfx = Instantiate(explosionVFX, transform.position, Quaternion.identity);
+            Destroy(vfx.gameObject, 3f);
+        }
+        totalLives--;
+        UIManager.Instance.UpdateLivesUI(totalLives);
+
+        if (totalLives > 0)
+        {
+            Invoke(nameof(Respawn), 2f); // Espera 2 segundos y respawnea
+
+        }
+        else
+        {
+           
+            GameManager.Instance.GameOver();
+        }
+    }
+    private void Respawn()
+    {
+        // Reiniciar salud y power-ups
+        currentHealth = maxHealth;
+        shotLevel = 1;
+
+        // Mover al punto de respawn
+        transform.position = respawnPoint.position;
+
+        // Mostrar al jugador nuevamente
+        gameObject.SetActive(true);
+
+        isDead = false;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -179,5 +234,16 @@ public class PlayerController : MonoBehaviour
             UpgradeShot();
             Destroy(other.gameObject);
         }
+        else if (other.CompareTag("Enemy"))
+        {
+            TakeDamage(99);
+            Destroy(other.gameObject);
+        }
+        else if (other.CompareTag("Boss"))
+        {
+            TakeDamage(99);
+
+        }
     }
+ 
 }
