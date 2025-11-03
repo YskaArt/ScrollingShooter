@@ -17,7 +17,7 @@ public class EnemyShooter : EnemyBase
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
     }
 
-    protected override void Move()
+    public override void Move()
     {
         if (player == null)
             return;

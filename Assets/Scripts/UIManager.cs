@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIManager : MonoBehaviour
+public class UIManager : Singleton<UIManager>
 {
-    public static UIManager Instance;
+   
 
     [Header("Puntuación")]
     public Text scoreText; 
@@ -20,13 +20,6 @@ public class UIManager : MonoBehaviour
     public int CurrentScore
     {
         get; private set;
-    }
-
-
-    void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
     }
 
     void Update()

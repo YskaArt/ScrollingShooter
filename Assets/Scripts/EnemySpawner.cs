@@ -1,15 +1,23 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Enemigos")]
-    public GameObject[] enemyPrefabs;
-    public float spawnInterval = 2f;
+    [SerializeField] private GameObject[] enemyPrefabs;
+    [SerializeField] private int poolSizePerEnemy = 10; // cantidad de instancias por tipo
+    [SerializeField] private float spawnInterval = 2f;
 
     [Header("Área de Spawn")]
-    public BoxCollider spawnArea;
+    [SerializeField] private BoxCollider spawnArea;
 
     private float timer;
+    private Dictionary<GameObject, Queue<GameObject>> enemyPools = new();
+
+    void Start()
+    {
+        InitializePools();
+    }
 
     void Update()
     {
@@ -22,14 +30,59 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    void InitializePools()
+    {
+        foreach (GameObject prefab in enemyPrefabs)
+        {
+            Queue<GameObject> pool = new Queue<GameObject>();
+
+            for (int i = 0; i < poolSizePerEnemy; i++)
+            {
+                GameObject obj = Instantiate(prefab);
+                obj.SetActive(false);
+                pool.Enqueue(obj);
+            }
+
+            enemyPools.Add(prefab, pool);
+        }
+    }
+
     void SpawnEnemy()
     {
         if (enemyPrefabs.Length == 0 || spawnArea == null) return;
 
         GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        GameObject enemy = GetPooledObject(prefab);
 
-        Vector3 spawnPos = GetRandomPointInBox(spawnArea);
-        Instantiate(prefab, spawnPos, prefab.transform.rotation);
+        if (enemy != null)
+        {
+            Vector3 spawnPos = GetRandomPointInBox(spawnArea);
+            enemy.transform.position = spawnPos;
+            enemy.transform.rotation = prefab.transform.rotation;
+            enemy.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning($"No hay enemigos disponibles en el pool para {prefab.name}");
+        }
+    }
+
+    GameObject GetPooledObject(GameObject prefab)
+    {
+        if (!enemyPools.ContainsKey(prefab)) return null;
+
+        Queue<GameObject> pool = enemyPools[prefab];
+
+        // Buscar uno inactivo
+        foreach (GameObject obj in pool)
+        {
+            if (!obj.activeInHierarchy)
+                return obj;
+        }
+
+       
+
+        return null;
     }
 
     Vector3 GetRandomPointInBox(BoxCollider box)

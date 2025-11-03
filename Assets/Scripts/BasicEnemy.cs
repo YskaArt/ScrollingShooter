@@ -12,7 +12,7 @@ public class EnemyBasic : EnemyBase
         lateralOffset = Random.Range(0f, 15f * Mathf.PI); // Variación por enemigo
     }
 
-    protected override void Move()
+    public override void Move()
     {
         if (Camera.main == null) return;
 

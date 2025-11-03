@@ -10,7 +10,7 @@ public abstract class EnemyBase : MonoBehaviour
     public VisualEffect explosionEffectPrefab;
     public int Points;
     protected int currentHealth;
-    protected Rigidbody rb;
+    public Rigidbody rb;
 
     [Header("Drops")]
     public List<DropItem> dropTable;
@@ -38,7 +38,7 @@ public abstract class EnemyBase : MonoBehaviour
         Move();
     }
 
-    protected abstract void Move();
+    public abstract void Move();
 
     public virtual void TakeDamage(int amount)
     {

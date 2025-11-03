@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public class BackgroundMusic : MonoBehaviour
+public class BackgroundMusic : Singleton<BackgroundMusic>
 {
-    public static BackgroundMusic Instance;
+   
 
     private AudioSource audioSource;
 
-    void Awake()
+    protected override void Awake()
     {
         
         if (Instance != null && Instance != this)
@@ -14,10 +14,6 @@ public class BackgroundMusic : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
-        // Asignar la instancia y hacer que no se destruya al cambiar de escena
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
 
         // Obtener o agregar un AudioSource
         audioSource = GetComponent<AudioSource>();

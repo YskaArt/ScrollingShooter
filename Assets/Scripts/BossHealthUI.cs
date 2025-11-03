@@ -3,20 +3,31 @@ using UnityEngine.UI;
 
 public class BossHealthUI : MonoBehaviour
 {
-    public Image healthFill;
-    private BossController boss;
+    [SerializeField] private Image healthFill;
+    private int maxHealth;
 
-    void Start()
+    private void OnEnable()
     {
-        boss = FindAnyObjectByType<BossController>();
+        BossEvents.OnBossHealthChanged += UpdateHealthUI;
+        BossEvents.OnBossDied += HideHealthUI;
     }
 
-    void Update()
+    private void OnDisable()
     {
-        if (boss != null && healthFill != null)
-        {
-            float healthRatio = Mathf.Clamp01((float)boss.CurrentHealth / boss.maxHealth);
-            healthFill.fillAmount = healthRatio;
-        }
+        BossEvents.OnBossHealthChanged -= UpdateHealthUI;
+        BossEvents.OnBossDied -= HideHealthUI;
+    }
+
+    private void UpdateHealthUI(int current, int max)
+    {
+        maxHealth = max;
+        if (healthFill != null)
+            healthFill.fillAmount = Mathf.Clamp01((float)current / max);
+    }
+
+    private void HideHealthUI()
+    {
+        if (healthFill != null)
+            healthFill.fillAmount = 0;
     }
 }

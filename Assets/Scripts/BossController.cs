@@ -1,129 +1,137 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.VFX;
-using UnityEngine.Audio;
 
+[RequireComponent(typeof(Rigidbody))]
 public class BossController : EnemyBase
 {
+   
+    public event Action<int, int> OnHealthChanged; // Vida actual / máxima
+    public event Action OnBossDied;
+    private List<ICommand> attackCommands;
 
-    public int CurrentHealth => currentHealth;
-    [Header("Disparo")]
-    public GameObject straightProjectilePrefab;
-    public GameObject homingProjectilePrefab;
-    public Transform[] straightFirePoints; // 3 FirePoints
-    public Transform[] homingFirePoints;   // 2 FirePoints
-    public float fireRate = 2f;
-    private float fireTimer;
+
+    [Header("Ataque")]
+    [SerializeField] private GameObject straightProjectilePrefab;
+    [SerializeField] private GameObject homingProjectilePrefab;
+    [SerializeField] private Transform[] straightFirePoints;
+    [SerializeField] private Transform[] homingFirePoints;
+    [SerializeField] private float fireRate = 2f;
 
     [Header("Movimiento")]
-    public float moveRange = 10f;
+    [SerializeField] private float moveRange = 10f;
     private Vector3 startPos;
     private bool movingRight = true;
 
     [Header("Jugador")]
-    public Transform player;
+    [SerializeField] private Transform player;
 
-    
-    public float deathDelay = 2f;     
-    public int deathVFXCount = 5;
+    [Header("Muerte Boss")]
+    [SerializeField] private float deathDelay = 2f;
+    [SerializeField] private int deathVFXCount = 5;
 
+    public BossState CurrentState { get; private set; }
+
+    public int CurrentHealth => currentHealth;
+    public float FireRate => fireRate;
+
+   
     protected override void Awake()
     {
-
         base.Awake();
         startPos = transform.position;
-        fireTimer = fireRate;
+
         if (player == null)
             player = FindAnyObjectByType<PlayerController>()?.transform;
-    }
-
-    protected override void FixedUpdate()
-    {
-        base.FixedUpdate();
-        fireTimer -= Time.deltaTime;
-        if (fireTimer <= 0f)
+        attackCommands = new List<ICommand>
         {
-            FireStraightProjectiles();
-            FireHomingProjectiles();
-            fireTimer = fireRate;
-        }
-
-      
+            new FireStraightCommand(this),
+            new FireHomingCommand(this)
+        };
     }
 
-  
+    private void Start()
+    {
+        SwitchState(new BossAttackState(this));
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
 
-    protected override void Move()
+    private void Update()
+    {
+        CurrentState?.UpdateState();
+    }
+    public void ExecuteAttackCommands()
+    {
+        foreach (var command in attackCommands)
+        {
+            command.Execute();
+        }
+    }
+
+    public void SwitchState(BossState newState)
+    {
+        CurrentState?.ExitState();
+        CurrentState = newState;
+        CurrentState.EnterState();
+    }
+
+   
+     public override void Move()
     {
         float direction = movingRight ? 1f : -1f;
         rb.linearVelocity = new Vector3(direction * moveSpeed, 0f, 0f);
 
         if (movingRight && transform.position.x >= startPos.x + moveRange)
-        {
             movingRight = false;
-        }
         else if (!movingRight && transform.position.x <= startPos.x - moveRange)
-        {
             movingRight = true;
-        }
     }
 
-    void FireStraightProjectiles()
+    public void FireStraightProjectiles()
     {
         foreach (Transform firePoint in straightFirePoints)
         {
             GameObject proj = Instantiate(straightProjectilePrefab, firePoint.position, firePoint.rotation);
             if (proj.TryGetComponent<Rigidbody>(out var rb))
-            {
                 rb.linearVelocity = firePoint.forward * 10f;
-            }
         }
     }
 
-    void FireHomingProjectiles()
+    public void FireHomingProjectiles()
     {
         foreach (Transform firePoint in homingFirePoints)
         {
             GameObject proj = Instantiate(homingProjectilePrefab, firePoint.position, firePoint.rotation);
             if (proj.TryGetComponent<HomingProjectile>(out var homing))
-            {
                 homing.SetTarget(player);
-            }
         }
     }
 
-   
+    // ===========================
+    // VIDA Y MUERTE
+    // ===========================
     public override void TakeDamage(int amount)
     {
         currentHealth -= amount;
+        if (currentHealth < 0) currentHealth = 0;
+
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         if (currentHealth <= 0)
         {
-            currentHealth = 0;
-
-            // Forzar visualmente la barra de vida a 0
-            BossHealthUI bossUI = FindAnyObjectByType<BossHealthUI>();
-            if (bossUI != null && bossUI.healthFill != null)
-                bossUI.healthFill.fillAmount = 0;
-
-            
-            StartCoroutine(DeathSequence());
+            SwitchState(new BossDeathState(this));
+            OnBossDied?.Invoke();
         }
     }
 
-    private IEnumerator DeathSequence()
+    public IEnumerator DeathSequence()
     {
-        float duration = deathDelay;
-        float interval = duration / deathVFXCount;
+        float interval = deathDelay / deathVFXCount;
 
         for (int i = 0; i < deathVFXCount; i++)
         {
-            Vector3 randomOffset = new Vector3(
-                Random.Range(-1f, 1f),
-                Random.Range(-1f, 1f),
-                Random.Range(-1f, 1f)
-            );
-
             if (explosionEffectPrefab != null)
             {
                 audioSource.PlayOneShot(deathSound);
@@ -133,11 +141,8 @@ public class BossController : EnemyBase
 
             yield return new WaitForSeconds(interval);
         }
-       
-     
+
         GameManager.Instance.Victory();
-
-
+        Die(); // ← Llama al método base (Drop + Score + Destroy)
     }
-
 }

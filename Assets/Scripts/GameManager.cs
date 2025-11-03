@@ -1,9 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : Singleton<GameManager>
 {
-    public static GameManager Instance;
+   
 
     public GameObject gameOverMenu;
     public GameObject FirstSpawner;
@@ -16,11 +16,6 @@ public class GameManager : MonoBehaviour
     private bool bossSpawned = false;
 
     public BossController bossController;
-    void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-    }
 
     void Update()
     {
